@@ -12,4 +12,4 @@ from games.word_scramble import display_final_scores
 command = "leaderboard"
 
 async def handler(event):
-    await event.reply("leaderboard :-\n")
+    await  display_final_scores(event)
