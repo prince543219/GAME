@@ -262,6 +262,25 @@ async def show_score(event):
     print(f"User ID: {user_id} has a score of {score} points.")  # Debugging line
     await event.respond(f"🏆 Your current score in the last 24 hours is: {score} points")
 
+async def display_final_scores(event, active_players):
+    """
+    Display the final scores of the players from the last 24 hours.
+    """
+    scores_message = "🏆 Final Scores (Last 24 Hours) 🏆\n\n"
+    now = datetime.now()
+    time_threshold = now - timedelta(hours=24)
+
+    for player_id in active_players:
+        score = sum(
+            entry["score"]
+            for entry in player_scores.get(player_id, [])
+            if datetime.fromisoformat(entry["timestamp"]) >= time_threshold
+        )
+        first_name = (await event.client.get_entity(player_id)).first_name or "Anonymous"
+        scores_message += f"{first_name}: {score} points\n"
+
+    await event.respond(scores_message)
+
 
 async def load_wordlist_from_file(difficulty):
     """
