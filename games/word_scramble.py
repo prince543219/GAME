@@ -11,6 +11,9 @@ WORDLIST_FILE = "data/wordlist.json"  # Path to your wordlist JSON file
 # Store user games (track active games)
 active_games = {}
 
+# Store the global game status
+game_running = False
+
 # Store player scores
 player_scores = {}
 
@@ -50,12 +53,21 @@ async def start_word_scramble(event):
     Start the Word Scramble game.
     Users first choose the game mode (Word Scramble), then choose their difficulty level.
     """
+    global game_running
     user_id = event.sender_id
+
+    # Check if a game is already running
+    if game_running:
+        await event.respond("❌ A game is already running. Please wait for it to finish before starting a new one.")
+        return
 
     # Check if the user is already playing a game
     if user_id in active_games:
-        await event.respond("❌ You are already playing a game. Type /stop to end the current game.")
+        await event.respond("❌ You are already playing a game")
         return
+
+    # Set the game_running flag to True
+    game_running = True
 
     # Handle game mode selection
     @event.client.on(events.CallbackQuery)
@@ -107,6 +119,7 @@ async def play_game(event, wordlist):
     Play the Word Scramble game.
     Words are scrambled, and players have a limited time to guess the correct answer.
     """
+    global game_running
     user_id = event.sender_id
     active_games[user_id] = event.chat_id
     chat_id = event.chat_id
@@ -138,7 +151,7 @@ async def play_game(event, wordlist):
         def check_message(guess_event):
             return (
                 guess_event.chat_id == chat_id 
-                and guess_event.text.strip().lower() != "/stop" 
+                and guess_event.text.strip().lower() != "/stop122334" 
                 and guess_event.sender_id in active_players
             )
 
@@ -170,41 +183,17 @@ async def play_game(event, wordlist):
             return
 
     active_games.pop(user_id, None)
+    game_running = False
 
     # Display final scores
     await display_final_scores(event, active_players)
-
-async def display_final_scores(event, active_players):
-    """
-    Display the final scores of the game.
-    """
-    cutoff_time = datetime.now() - timedelta(hours=24)
-    final_scores = {}
-    for player_id in active_players:
-        scores = [
-            entry["score"]
-            for entry in player_scores.get(player_id, [])
-            if datetime.fromisoformat(entry["timestamp"]) >= cutoff_time
-        ]
-        final_scores[player_id] = sum(scores)
-        
-    sorted_scores = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)[:10]
-
-    leaderboard = "🏅 Top 10 Scores in the Last 24 Hours:\n"
-    for idx, (player_id, score) in enumerate(sorted_scores):
-        participant = await event.client.get_entity(player_id)
-        first_name = participant.first_name or "Anonymous"
-        profile_link = f"tg://user?id={player_id}"
-        leaderboard += f"{idx + 1}. [**{first_name}**]({profile_link}): {score} points\n"
-
-    await event.respond(leaderboard, parse_mode="md")
-    active_players_in_game.clear()  # Optionally clear active players
 
 async def stop_game(event):
     """
     Stop the current game, notify the user, and display the final scores.
     Only the admin or owner of the chat can stop the game.
     """
+    global game_running
     user_id = event.sender_id
     chat_id = event.chat_id
 
@@ -224,6 +213,7 @@ async def stop_game(event):
 
     # Remove the game from active_games
     active_games.pop(user_id, None)
+    game_running = False
 
     # Notify the user
     await event.respond("🛑 Your game has been stopped. Displaying final scores...")
