@@ -238,30 +238,6 @@ async def stop_game(event):
         await display_final_scores(event, active_players)
 
 
-async def show_score(event):
-    """
-    Show the user's score for the current game session.
-    """
-    user_id = event.sender_id
-    chat_id = event.chat_id
-
-    print(f"User ID: {user_id} is requesting their score...")  # Debugging line
-
-    # Check if the user is in an active game
-    if user_id not in active_games:
-        await event.respond("❌ You are not currently playing any game.")
-        print(f"User ID: {user_id} not in active_games...")  # Debugging line
-        return
-
-    # Display the user's score
-    score = sum(
-        entry["score"]
-        for entry in player_scores.get(user_id, [])
-        if datetime.fromisoformat(entry["timestamp"]) >= datetime.now() - timedelta(hours=24)
-    )
-    print(f"User ID: {user_id} has a score of {score} points.")  # Debugging line
-    await event.respond(f"🏆 Your current score in the last 24 hours is: {score} points")
-
 async def display_final_scores(event, active_players):
     """
     Display the final scores of the players from the last 24 hours.
