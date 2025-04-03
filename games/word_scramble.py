@@ -241,13 +241,17 @@ async def show_score(event):
     user_id = event.sender_id
     chat_id = event.chat_id
 
+    print(f"User ID: {user_id} is requesting their score...")  # Debugging line
+
     # Check if the user is in an active game
     if user_id not in active_games:
         await event.respond("❌ You are not currently playing any game.")
+        print(f"User ID: {user_id} not in active_games...")  # Debugging line
         return
 
     # Display the user's score
     score = player_scores.get(user_id, 0)
+    print(f"User ID: {user_id} has a score of {score} points.")  # Debugging line
     await event.respond(f"🏆 Your current score is: {score} points")
 
 
