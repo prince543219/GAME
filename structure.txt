@@ -1,0 +1,23 @@
+word-game-bot/
+├── bot.py              # Main entry point
+├── handlers/
+│   ├── start.py        # `/start` command logic
+│   ├── help.py         # `/help` command logic
+│   ├── score.py        # `/score` command logic
+│   ├── leaderboard.py  # `/leaderboard` command logic
+│   ├── game.py         # Handles starting/ending games
+├── games/
+│   ├── word_scramble.py
+│   ├── word_chain.py
+│   ├── hangman.py
+│   ├── word_guess.py
+│   └── utils.py
+├── database/
+│   ├── models.py
+│   └── db_setup.py
+├── data/
+│   ├── wordlist.txt
+│   └── definitions.json
+├── config.py
+├── requirements.txt
+└── README.md
