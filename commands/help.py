@@ -15,6 +15,7 @@ async def handler(event):
         "3. /score - Check your current score.\n"
         "4. /leaderboard - View the leaderboard.\n"
         "5. /game - Start a game (game commands will be added here later).\n\n"
+        "6. /stop - to stop the game
         "✨ You can always type **/start** to get back to the main menu.\n"
     )
 
