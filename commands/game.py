@@ -9,12 +9,11 @@ command = "game"
 async def handler(event):
     """Handles the /game command and displays inline buttons."""
     game_buttons = [
-        [Button.inline("Word Scramble", b"word_scramble"), Button.inline("Word Chain", b"word_chain")],
-        [Button.inline("Hangman", b"hangman"), Button.inline("Word Guess", b"word_guess")],
+        [Button.inline("Word Scramble", b"word_scramble"),],
     ]
     
     await event.respond(
-        "🎮 Choose a game to start:",
+        "🎮 Click on game to start:",
         buttons=game_buttons
     )
 
