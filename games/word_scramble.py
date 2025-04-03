@@ -234,6 +234,21 @@ async def stop_game(event):
         await display_final_scores(event, active_players)
 
 
+async def show_score(event):
+    """
+    Show the user's score for the current game session.
+    """
+    user_id = event.sender_id
+    chat_id = event.chat_id
+
+    # Check if the user is in an active game
+    if user_id not in active_games:
+        await event.respond("❌ You are not currently playing any game.")
+        return
+
+    # Display the user's score
+    score = player_scores.get(user_id, 0)
+    await event.respond(f"🏆 Your current score is: {score} points")
 
 
 async def load_wordlist_from_file(difficulty):
@@ -249,3 +264,8 @@ async def load_wordlist_from_file(difficulty):
     except FileNotFoundError:
         print(f"File {WORDLIST_FILE} not found.")  # Debugging line
         return []
+
+# Register the /score command
+@events.register(events.NewMessage(pattern='/score'))
+async def handle_score_command(event):
+    await show_score(event)
