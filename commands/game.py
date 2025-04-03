@@ -31,4 +31,4 @@ async def button_handler(event):
     elif game_choice == "word_guess":
         await event.respond("🧩 Starting Word Guess...")  # Example message
     else:
-        await event.respond("❌ Invalid game selection.")
+        await event.respond("starting game 🧩")
