@@ -11,6 +11,12 @@ scores_collection = db["scores"]
 # Command name
 command = "leaderboard"
 
+# Old code (deprecated)
+count = cursor.count()
+
+# New code
+count = collection.count_documents(cursor.query)
+
 # Command handler function
 async def handler(event):
     """Handle the /leaderboard command to display the top scores."""
