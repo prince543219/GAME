@@ -1,6 +1,7 @@
 import random
 import asyncio
 import json
+from datetime import datetime, timedelta
 from telethon import events, Button
 from telethon.tl.types import ChannelParticipantsAdmins
 
@@ -35,6 +36,14 @@ def load_scores():
 
 # Load scores at the start
 load_scores()
+
+def update_score(user_id, score):
+    timestamp = datetime.now().isoformat()
+    if user_id in player_scores:
+        player_scores[user_id].append({"score": score, "timestamp": timestamp})
+    else:
+        player_scores[user_id] = [{"score": score, "timestamp": timestamp}]
+    save_scores()
 
 async def start_word_scramble(event):
     """
@@ -93,7 +102,6 @@ async def start_word_scramble(event):
             event.client.remove_event_handler(handle_difficulty_choice)
             await event.delete()
 
-
 async def play_game(event, wordlist):
     """
     Play the Word Scramble game.
@@ -110,7 +118,7 @@ async def play_game(event, wordlist):
     for participant in participants:
         active_players.append(participant.id)
         if participant.id not in player_scores:
-            player_scores[participant.id] = 0
+            player_scores[participant.id] = []
 
     # Store the active players list in the active_players_in_game dictionary
     active_players_in_game[chat_id] = active_players
@@ -144,9 +152,8 @@ async def play_game(event, wordlist):
                 await event.respond(f"✅ {first_name} guessed the word correctly: {word}!")
                 
                 # Update score only if it's the highest
-                player_scores[correct_guess] = max(player_scores[correct_guess], len(word))
+                update_score(correct_guess, len(word))
                 active_players_in_game[correct_guess] = True
-                save_scores()  # Save updated scores
                 timer_task.cancel()
 
         try:
@@ -171,11 +178,19 @@ async def display_final_scores(event, active_players):
     """
     Display the final scores of the game.
     """
-    # Ensure player_scores is accessed correctly for each player
-    final_scores = {player_id: player_scores.get(player_id, 0) for player_id in active_players}
+    cutoff_time = datetime.now() - timedelta(hours=24)
+    final_scores = {}
+    for player_id in active_players:
+        scores = [
+            entry["score"]
+            for entry in player_scores.get(player_id, [])
+            if datetime.fromisoformat(entry["timestamp"]) >= cutoff_time
+        ]
+        final_scores[player_id] = sum(scores)
+        
     sorted_scores = sorted(final_scores.items(), key=lambda x: x[1], reverse=True)[:10]
 
-    leaderboard = "🏅 Top 10 Scores:\n"
+    leaderboard = "🏅 Top 10 Scores in the Last 24 Hours:\n"
     for idx, (player_id, score) in enumerate(sorted_scores):
         participant = await event.client.get_entity(player_id)
         first_name = participant.first_name or "Anonymous"
@@ -184,7 +199,6 @@ async def display_final_scores(event, active_players):
 
     await event.respond(leaderboard, parse_mode="md")
     active_players_in_game.clear()  # Optionally clear active players
-
 
 async def stop_game(event):
     """
@@ -250,9 +264,13 @@ async def show_score(event):
         return
 
     # Display the user's score
-    score = player_scores.get(user_id, 0)
+    score = sum(
+        entry["score"]
+        for entry in player_scores.get(user_id, [])
+        if datetime.fromisoformat(entry["timestamp"]) >= datetime.now() - timedelta(hours=24)
+    )
     print(f"User ID: {user_id} has a score of {score} points.")  # Debugging line
-    await event.respond(f"🏆 Your current score is: {score} points")
+    await event.respond(f"🏆 Your current score in the last 24 hours is: {score} points")
 
 
 async def load_wordlist_from_file(difficulty):
