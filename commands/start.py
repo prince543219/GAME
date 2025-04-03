@@ -1,7 +1,7 @@
 # commands/start.py
 from telethon import Button
 
-command = "start"
+command = "start_game_1"
 
 # Command handler function
 async def handler(event):
