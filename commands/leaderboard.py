@@ -1,24 +1,12 @@
-from sqlalchemy import create_engine, Table, Column, Integer, MetaData, select, DateTime
+from pymongo import MongoClient
 from datetime import datetime, timedelta
 
 # Define the database connection (update with your database details)
-DATABASE_URL = "sqlite:///bot_database.db"  # Replace with your database URL if different
-db_engine = create_engine(DATABASE_URL)
-metadata = MetaData()
+client = MongoClient("mongodb+srv://surajit54321:surajit54321@cluster0.7mn37.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")  # Replace with your MongoDB connection string
+db = client["Cluster0"]
 
-# Define the scores table (ensure it matches your database schema)
-scores_table = Table(
-    "scores",
-    metadata,
-    Column("id", Integer, primary_key=True),
-    Column("user_id", Integer, nullable=False),
-    Column("chat_id", Integer, nullable=False),
-    Column("score", Integer, default=0),
-    Column("timestamp", DateTime, default=datetime.utcnow)
-)
-
-# Create the table if it doesn't exist
-metadata.create_all(db_engine)
+# Define the scores collection
+scores_collection = db["scores"]
 
 # Command name
 command = "leaderboard"
@@ -32,30 +20,24 @@ async def handler(event):
     
     try:
         # Fetch leaderboard data from the database
-        with db_engine.connect() as connection:
-            stmt = (
-                select(scores_table.c.user_id, scores_table.c.score)
-                .where(scores_table.c.chat_id == chat_id)
-                .where(scores_table.c.timestamp >= twenty_four_hours_ago)
-                .order_by(scores_table.c.score.desc())
-                .limit(10)
-            )
-            results = connection.execute(stmt).fetchall()
+        results = scores_collection.find(
+            {"chat_id": chat_id, "timestamp": {"$gte": twenty_four_hours_ago}}
+        ).sort("score", -1).limit(10)
 
         # Check if there are scores to display
-        if not results:
+        if results.count() == 0:
             await event.respond("No leaderboard data available yet! Start playing to be featured here.")
             return
 
         # Format leaderboard response
         leaderboard_text = "**🏆 Leaderboard (Last 24 Hours):**\n\n"
-        for rank, (user_id, score) in enumerate(results, start=1):
+        for rank, entry in enumerate(results, start=1):
             try:
-                user = await event.client.get_entity(user_id)
+                user = await event.client.get_entity(entry["user_id"])
                 user_name = user.first_name or "Anonymous"
-                leaderboard_text += f"{rank}. {user_name} - {score} points\n"
+                leaderboard_text += f"{rank}. {user_name} - {entry['score']} points\n"
             except Exception as e:
-                print(f"Error fetching user {user_id}: {e}")
+                print(f"Error fetching user {entry['user_id']}: {e}")
 
         # Send the leaderboard response
         await event.respond(leaderboard_text)
