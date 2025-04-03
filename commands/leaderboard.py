@@ -1,5 +1,5 @@
-# commands/leaderboard.py
-from sqlalchemy import create_engine, Table, Column, Integer, MetaData, select
+from sqlalchemy import create_engine, Table, Column, Integer, MetaData, select, DateTime
+from datetime import datetime, timedelta
 
 # Define the database connection (update with your database details)
 DATABASE_URL = "sqlite:///bot_database.db"  # Replace with your database URL if different
@@ -14,6 +14,7 @@ scores_table = Table(
     Column("user_id", Integer, nullable=False),
     Column("chat_id", Integer, nullable=False),
     Column("score", Integer, default=0),
+    Column("timestamp", DateTime, default=datetime.utcnow)
 )
 
 # Create the table if it doesn't exist
@@ -26,6 +27,8 @@ command = "leaderboard"
 async def handler(event):
     """Handle the /leaderboard command to display the top scores."""
     chat_id = event.chat_id
+    now = datetime.utcnow()
+    twenty_four_hours_ago = now - timedelta(hours=24)
     
     try:
         # Fetch leaderboard data from the database
@@ -33,6 +36,7 @@ async def handler(event):
             stmt = (
                 select(scores_table.c.user_id, scores_table.c.score)
                 .where(scores_table.c.chat_id == chat_id)
+                .where(scores_table.c.timestamp >= twenty_four_hours_ago)
                 .order_by(scores_table.c.score.desc())
                 .limit(10)
             )
@@ -44,7 +48,7 @@ async def handler(event):
             return
 
         # Format leaderboard response
-        leaderboard_text = "**🏆 Leaderboard:**\n\n"
+        leaderboard_text = "**🏆 Leaderboard (Last 24 Hours):**\n\n"
         for rank, (user_id, score) in enumerate(results, start=1):
             try:
                 user = await event.client.get_entity(user_id)
