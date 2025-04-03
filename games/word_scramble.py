@@ -2,6 +2,7 @@ import random
 import asyncio
 import json
 from telethon import events, Button
+from telethon.tl.types import ChannelParticipantsAdmins
 
 # File path for wordlist JSON
 WORDLIST_FILE = "data/wordlist.json"  # Path to your wordlist JSON file
@@ -188,9 +189,20 @@ async def display_final_scores(event, active_players):
 async def stop_game(event):
     """
     Stop the current game, notify the user, and display the final scores.
+    Only the admin or owner of the chat can stop the game.
     """
     user_id = event.sender_id
     chat_id = event.chat_id
+
+    # Get the chat administrators
+    admins = await event.client.get_participants(chat_id, filter=ChannelParticipantsAdmins)
+
+    # Check if the user is an admin or the owner of the chat
+    is_admin_or_owner = any(admin.id == user_id for admin in admins)
+
+    if not is_admin_or_owner:
+        await event.respond("❌ Only the admin or owner of the chat can stop the game.")
+        return
 
     if user_id not in active_games:
         await event.respond("❌ You are not currently playing any game.")
