@@ -9,7 +9,7 @@ db = client["Cluster0"]
 scores_collection = db["scores"]
 
 # Command name
-command = "leaderboard"
+command = "leaderboard123"
 
 # Old code (deprecated)
 count = cursor.count()
